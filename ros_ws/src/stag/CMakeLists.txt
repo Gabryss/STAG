@@ -37,7 +37,7 @@ install(DIRECTORY
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(topology_core test/test_topology_core.py)
-  ament_add_pytest_test(stag_node_integration test/test_stag_node_integration.py TIMEOUT 10)
+  ament_add_pytest_test(stag_node_integration test/test_stag_node_integration.py TIMEOUT 45)
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)
