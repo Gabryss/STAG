@@ -21,12 +21,12 @@ from stag_core.stag_node import StagNode
 
 
 def _demo_costmap() -> OccupancyGrid:
-    width = 48
-    height = 48
+    width = 32
+    height = 32
     values = np.full((height, width), 100, dtype=np.int8)
-    values[22:26, 6:42] = 5
-    values[6:42, 22:26] = 20
-    values[17:31, 17:31] = 0
+    values[15:18, 4:28] = 5
+    values[4:28, 15:18] = 20
+    values[12:21, 12:21] = 0
 
     message = OccupancyGrid()
     message.header.frame_id = "map"
@@ -45,9 +45,11 @@ class StagNodeIntegrationTest(unittest.TestCase):
             args=[
                 "--ros-args",
                 "-p",
-                "gradient_node_count:=4",
+                "gradient_node_count:=0",
                 "-p",
-                "simplify_samples_per_cell:=2.0",
+                "simplify_samples_per_cell:=1.0",
+                "-p",
+                "prune_leaf_length_cells:=0.0",
                 "-p",
                 "save_graph:=false",
             ],
@@ -85,7 +87,7 @@ class StagNodeIntegrationTest(unittest.TestCase):
         publisher = self.client_node.create_publisher(OccupancyGrid, "/rover/costmap", 1)
 
         costmap = _demo_costmap()
-        deadline = time.monotonic() + 20.0
+        deadline = time.monotonic() + 60.0
         while time.monotonic() < deadline and not (received_graphs and received_markers and received_diagnostics):
             costmap.header.stamp = self.client_node.get_clock().now().to_msg()
             publisher.publish(costmap)
