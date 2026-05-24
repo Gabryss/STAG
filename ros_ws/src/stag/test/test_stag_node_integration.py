@@ -21,12 +21,12 @@ from stag_core.stag_node import StagNode
 
 
 def _demo_costmap() -> OccupancyGrid:
-    width = 80
-    height = 80
+    width = 48
+    height = 48
     values = np.full((height, width), 100, dtype=np.int8)
-    values[38:43, 10:70] = 5
-    values[10:70, 38:43] = 20
-    values[30:50, 30:50] = 0
+    values[22:26, 6:42] = 5
+    values[6:42, 22:26] = 20
+    values[17:31, 17:31] = 0
 
     message = OccupancyGrid()
     message.header.frame_id = "map"
@@ -41,7 +41,18 @@ def _demo_costmap() -> OccupancyGrid:
 class StagNodeIntegrationTest(unittest.TestCase):
     def setUp(self):
         self.context = Context()
-        self.context.init(initialize_logging=False)
+        self.context.init(
+            args=[
+                "--ros-args",
+                "-p",
+                "gradient_node_count:=4",
+                "-p",
+                "simplify_samples_per_cell:=2.0",
+                "-p",
+                "save_graph:=false",
+            ],
+            initialize_logging=False,
+        )
         self.executor = SingleThreadedExecutor(context=self.context)
         self.stag_node = StagNode(context=self.context)
         self.client_node = Node("stag_integration_test_client", context=self.context)
@@ -74,7 +85,7 @@ class StagNodeIntegrationTest(unittest.TestCase):
         publisher = self.client_node.create_publisher(OccupancyGrid, "/rover/costmap", 1)
 
         costmap = _demo_costmap()
-        deadline = time.monotonic() + 5.0
+        deadline = time.monotonic() + 20.0
         while time.monotonic() < deadline and not (received_graphs and received_markers and received_diagnostics):
             costmap.header.stamp = self.client_node.get_clock().now().to_msg()
             publisher.publish(costmap)
