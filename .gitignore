@@ -1,0 +1,22 @@
+# ROS/colcon build output
+build/
+install/
+log/
+
+# Python caches and test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# vscode files
+.vscode/
+
+# Local virtual environments
+.venv/
+venv/
+
+# Runtime graph snapshots
+docker/graph_output/
+*.npz

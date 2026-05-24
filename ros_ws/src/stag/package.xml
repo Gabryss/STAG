@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>stag</name>
+  <version>0.1.0</version>
+  <description>STAG: Sparse Traversability-Aware Topological Graphs for efficient autonomous rover navigation.</description>
+  <maintainer email="user@example.com">Gabriel</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>ament_cmake_python</build_depend>
+  <build_depend>rosidl_default_generators</build_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>nav_msgs</depend>
+  <depend>rcl_interfaces</depend>
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>visualization_msgs</depend>
+
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>python3-skimage</exec_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

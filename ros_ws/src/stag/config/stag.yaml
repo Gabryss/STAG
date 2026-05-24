@@ -1,0 +1,40 @@
+stag_node:
+  ros__parameters:
+    rover_name: rover
+    costmap_topic: ""
+    graph_topic: ""
+    marker_topic: ""
+    diagnostics_topic: ""
+    save_service: ""
+    recompute_service: ""
+
+    free_threshold: 49
+    unknown_is_obstacle: true
+    keep_largest_component: true
+
+    clearance_min_cells: 1.0
+    simplify_samples_per_cell: 4.0
+    prune_leaf_length_cells: 8.0
+    prune_leaf_to_radius_ratio: 2.0
+
+    gradient_node_count: 48
+    gradient_node_quantile: 0.86
+    gradient_min_separation_cells: 10.0
+    seed: 0
+
+    min_publish_period_sec: 0.0
+    publish_markers: true
+    publish_diagnostics: true
+    save_graph: true
+    save_period_sec: 60.0
+    graph_save_path: ""
+
+    costmap_qos_reliability: best_effort
+    graph_qos_reliability: reliable
+    graph_transient_local: true
+    graph_qos_depth: 1
+    costmap_qos_depth: 1
+
+    marker_node_scale: 0.18
+    marker_edge_width: 0.05
+    marker_color_metric: traversability

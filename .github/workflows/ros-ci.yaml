@@ -1,0 +1,53 @@
+name: ROS CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ROS ${{ matrix.ros_distro }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [jazzy]
+    container:
+      image: ros:${{ matrix.ros_distro }}-ros-base
+    steps:
+      - name: Install git
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            python3-colcon-common-extensions \
+            python3-numpy \
+            python3-pytest \
+            python3-scipy \
+            python3-skimage
+          rosdep update
+          rosdep install --from-paths ros_ws/src --ignore-src -y --rosdistro ${{ matrix.ros_distro }}
+      - name: Build
+        shell: bash
+        run: |
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          colcon build --packages-select stag --base-paths ros_ws/src
+      - name: Test
+        shell: bash
+        run: |
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          colcon test --packages-select stag --base-paths ros_ws/src --event-handlers console_direct+
+          colcon test-result --verbose
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker compose build

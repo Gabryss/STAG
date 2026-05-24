@@ -1,0 +1,24 @@
+services:
+  stag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: stag:jazzy
+    container_name: stag
+    network_mode: host
+    ipc: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      ROS_LOCALHOST_ONLY: ${ROS_LOCALHOST_ONLY:-0}
+      RCUTILS_COLORIZED_OUTPUT: "1"
+      RCUTILS_LOGGING_BUFFERED_STREAM: "1"
+    volumes:
+      - ./ros_ws/src/stag/config/stag.yaml:/config/stag.yaml:ro
+      - ./docker/graph_output:/graph_output
+    command:
+      - ros2
+      - launch
+      - stag
+      - stag.launch.py
+      - params_file:=/config/stag.yaml
+      - graph_save_path:=/graph_output/stag_latest.npz

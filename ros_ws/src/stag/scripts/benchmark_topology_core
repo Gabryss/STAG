@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import statistics
+import time
+
+import numpy as np
+
+from stag_core.topology_core import (
+    analyze_costmap_topology,
+    extract_auxiliary_graph_nodes,
+    occupancy_grid_to_open_mask,
+    occupancy_grid_to_traversability,
+)
+
+
+def _synthetic_costmap(size: int) -> np.ndarray:
+    values = np.full((size, size), 100, dtype=np.int16)
+    center = size // 2
+    corridor = max(3, size // 32)
+    margin = max(4, size // 10)
+    values[center - corridor : center + corridor + 1, margin : size - margin] = 10
+    values[margin : size - margin, center - corridor : center + corridor + 1] = 25
+    block_radius = max(6, size // 8)
+    values[
+        center - block_radius : center + block_radius,
+        center - block_radius : center + block_radius,
+    ] = 0
+    shoulder = max(4, size // 16)
+    values[
+        margin * 2 : margin * 2 + shoulder,
+        center + block_radius : min(size - margin, center + block_radius + shoulder * 2),
+    ] = 45
+    return values
+
+
+def _run_once(size: int, gradient_node_count: int) -> tuple[float, int, int, int]:
+    values = _synthetic_costmap(size)
+    open_mask = occupancy_grid_to_open_mask(values.ravel(), size, size, 49, True)
+    traversability = occupancy_grid_to_traversability(values.ravel(), size, size, open_mask)
+
+    start = time.perf_counter()
+    topology = analyze_costmap_topology(open_mask, prune_leaf_length_cells=0.0)
+    auxiliary = extract_auxiliary_graph_nodes(
+        traversability,
+        open_mask,
+        gradient_node_count=gradient_node_count,
+    )
+    elapsed_ms = (time.perf_counter() - start) * 1000.0
+    node_count = len(topology.node_positions) + len(auxiliary.region_positions) + len(auxiliary.gradient_positions)
+    edge_count = len(topology.edge_polylines)
+    return elapsed_ms, int(np.count_nonzero(open_mask)), node_count, edge_count
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Benchmark STAG core extraction on synthetic costmaps.")
+    parser.add_argument("--sizes", nargs="+", type=int, default=[100, 250, 500])
+    parser.add_argument("--runs", type=int, default=5)
+    parser.add_argument("--gradient-node-count", type=int, default=48)
+    args = parser.parse_args()
+
+    print("size,run,open_cells,nodes,edges,elapsed_ms")
+    for size in args.sizes:
+        timings: list[float] = []
+        for run in range(args.runs):
+            elapsed_ms, open_cells, nodes, edges = _run_once(size, args.gradient_node_count)
+            timings.append(elapsed_ms)
+            print(f"{size},{run + 1},{open_cells},{nodes},{edges},{elapsed_ms:.3f}")
+        print(
+            f"# size={size} mean_ms={statistics.mean(timings):.3f} "
+            f"max_ms={max(timings):.3f} min_ms={min(timings):.3f}"
+        )
+
+
+if __name__ == "__main__":
+    main()

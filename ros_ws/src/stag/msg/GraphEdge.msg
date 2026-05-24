@@ -1,0 +1,9 @@
+uint32 id
+uint32 start_node
+uint32 end_node
+float32 length
+float32 min_clearance
+float32 mean_clearance
+float32 min_traversability
+float32 mean_traversability
+geometry_msgs/Point[] polyline
