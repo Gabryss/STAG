@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import time
 import unittest
+from unittest import mock
 
 import numpy as np
 import rclpy
@@ -18,6 +19,7 @@ from visualization_msgs.msg import MarkerArray
 
 from stag.msg import TerrainGraph
 from stag_core.stag_node import StagNode
+from stag_core.topology_core import AuxiliaryGraphNodes, CostmapTopologyResult, NODE_TYPE_ENDPOINT
 
 
 def _demo_costmap() -> OccupancyGrid:
@@ -38,8 +40,42 @@ def _demo_costmap() -> OccupancyGrid:
     return message
 
 
+def _fast_topology_result(open_mask: np.ndarray, **_) -> CostmapTopologyResult:
+    height, width = open_mask.shape
+    start = np.asarray([max(1.0, width * 0.25), max(1.0, height * 0.25)], dtype=float)
+    end = np.asarray([min(width - 2.0, width * 0.75), min(height - 2.0, height * 0.75)], dtype=float)
+    polyline = np.vstack([start, end])
+    return CostmapTopologyResult(
+        distance_field=np.ones_like(open_mask, dtype=float) * 4.0,
+        skeleton_mask=np.zeros_like(open_mask, dtype=bool),
+        node_positions=np.vstack([start, end]),
+        node_degrees=np.asarray([1, 1], dtype=int),
+        node_types=np.asarray([NODE_TYPE_ENDPOINT, NODE_TYPE_ENDPOINT], dtype=int),
+        edge_node_indices=np.asarray([[0, 1]], dtype=int),
+        edge_polylines=(polyline,),
+        edge_lengths=np.asarray([float(np.hypot(*(end - start)))], dtype=float),
+        edge_min_clearances=np.asarray([4.0], dtype=float),
+        edge_mean_clearances=np.asarray([4.0], dtype=float),
+    )
+
+
+def _fast_auxiliary_nodes(*_, **__) -> AuxiliaryGraphNodes:
+    return AuxiliaryGraphNodes(
+        region_positions=np.empty((0, 2), dtype=float),
+        region_classes=np.empty((0,), dtype=int),
+        gradient_positions=np.empty((0, 2), dtype=float),
+        gradient_strengths=np.empty((0,), dtype=float),
+    )
+
+
 class StagNodeIntegrationTest(unittest.TestCase):
     def setUp(self):
+        self.topology_patches = [
+            mock.patch("stag_core.stag_node.analyze_costmap_topology", side_effect=_fast_topology_result),
+            mock.patch("stag_core.stag_node.extract_auxiliary_graph_nodes", side_effect=_fast_auxiliary_nodes),
+        ]
+        for patcher in self.topology_patches:
+            patcher.start()
         self.context = Context()
         self.context.init(
             args=[
@@ -67,6 +103,8 @@ class StagNodeIntegrationTest(unittest.TestCase):
         self.client_node.destroy_node()
         self.stag_node.destroy_node()
         self.context.shutdown()
+        for patcher in reversed(self.topology_patches):
+            patcher.stop()
 
     def _spin_until(self, predicate, timeout_sec: float = 5.0) -> bool:
         deadline = time.monotonic() + timeout_sec
